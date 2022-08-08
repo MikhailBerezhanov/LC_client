@@ -1,0 +1,99 @@
+syntax = "proto3";
+
+package pb;
+
+// Информация об устройстве
+message DevInfo {
+    // PSU устройства - это может быть ПСУ ридера или свертка MAC-адреса
+    uint32  psu = 1;
+    // sysID 
+    // Может настраиваться в ручную, например в SUV, но обычно он совпадает с 'PSU'
+    uint32  sys_id = 2;
+    // тип устройства - "usk04|usk04xx|vm18|suv|avi"
+    string  type = 3;
+}
+
+// Тип шифрования
+enum EncryptionType {
+    NONE = 0;
+    AES = 1;
+}
+
+// Типы данных в 'Message::data'
+// Зафиксированные значения [1..4] для следующих proto-данных:
+// 'pb.SellLog', 'pb.RidesLog', 'pb.ViewLog', 'pb.SysEventsLog'
+enum DataType {
+    RAW = 0;        // сырые данные
+    SELL_LOG = 1;   // лог продаж 'pb.SellLog'
+    RIDES_LOG = 2;  // лог поездок 'pb.RidesLog'
+    VIEW_LOG = 3;   // лог просмотров 'pb.ViewLog'
+    SYS_LOG = 4;    // лог системных событий 'pb.SysEventsLog'
+    LOG_RESULT = 5; // ответное сообщение на *_LOG, 'pb.LogResult'
+}
+
+// Тип алгоритма, используемого для подписи данных
+enum SignatureType {
+    SHA1 = 0;
+    SHA256 = 1;
+    HMAC_SHA1 = 2;
+    HMAC_SHA256 = 3;
+}
+
+// Сообщение
+message Message {
+    // уникальный идентификатор
+    string name = 1;
+
+    // Информация об устройстве
+    DevInfo devinfo = 2;
+
+    // Признак шифрования данных
+    // Значения: none|aes|...
+    // Если поле отсутсвует, то по умолчанию считается, что данные не зашифрованы.
+    //
+    EncryptionType encrypted = 3;
+
+    // Идентификатор данных в `data`
+    //
+    DataType type = 4;
+
+    // URL или имя ресурса, которое определяет тип сериализованного protobuf-сообщения.
+    // Опциональное поле, если оно отсутствует, то для десериализации следует руководствоваться полем 'type'.
+    // Скорее всего сейчас не будет использоваться))
+    // Обычно такой подход используется для автоматической десериализации с помощью типа 'google.protobuf.Any'
+    // Подробнее: https://developers.google.com/protocol-buffers/docs/proto3#any
+    //
+    string type_url = 5;
+
+    // Здесь лежит Protobuf-сериализованное (и, опционально, зашифрованное сообщение) в формате, 
+    // который был оговорен для соответсвующего 'type' идентификатора.
+    //
+    // Если 'encrypted' != 'none', необходимо предварительно расшифровать данные, прежде чем использовать в Protobuf.
+    //
+    bytes data = 6;
+
+    // Признак подписи данных
+    // Значения: sha1|sha256|hmac-sha1|hmac-sha256|...
+    // Если поле отсутсвует, то по умолчанию считается, что данные подписаны sha1.
+    //
+    SignatureType signature_type = 7;
+
+    // Подпись в hex по алгоритму указанному в `signature_type`
+    // Рассчитывается по полю 'data', 
+    // если 'encrypted' != NONE, необходимо предварительно расшифровать данные, прежде чем проверять подпись.
+    //
+    string signature = 8;
+}
+
+// Пакет, предназначенный для передачи по HTTP(s)
+// "content-type": "application/octet-stream"` (rfc2046).
+message Package {
+    // Версия протокола - "2.0"
+    string protocol_ver = 1;
+    // Информация об устройстве
+    DevInfo devinfo = 2;
+    // Массив сообщений
+    repeated Message messages = 3;
+    // Время создания пакета в формате YYYY-mm-dd HH:MM:SS.sss ("%Y-%m-%d %H:%M:%S.SSS")
+    string current_time = 4;
+}

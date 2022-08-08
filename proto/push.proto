@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package pb;
+
+// Тип вызова
+enum Mode {
+    IMMIDIATE = 0;  // как можно скорее
+    QUEUED = 1;     // после отработки предыдущих событий
+    DELAYED = 2;    // после следующего info_post
+}
+
+// Формат вызова
+enum DataMode {
+    ONESHOT = 0;    // без повторения
+    DURATIONABLE = 1;   // проигрывание duration секунд
+    REPETITIVE = 2; // проигрывание duration раз
+}
+
+// PUSH сообщение 
+message Push {
+    // Текущий статус 
+    string action = 1; 
+    // Тип вызова
+    Mode mode = 2;
+    // Данные для события
+    string data = 3;
+    // Флаг для данных  
+    DataMode datamode = 4;
+    // Длительность проигрывания
+    uint32 duration = 5;
+}

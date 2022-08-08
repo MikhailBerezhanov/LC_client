@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package pb;
+
+message BaseInfo {
+    // Текущий статус 
+    string state = 1;
+    // Версия прошивки
+    string version = 2;
+}
+
+// Информация об устройстве
+message AviInfo {
+    BaseInfo base = 1;
+    // Свободное место на SD носителе (Mb)
+    uint32 sd_free_space = 2;
+    // Версия БД НСИ
+    string nsi_version = 3;
+    // Дата получения БД НСИ
+    string nsi_update_date = 4;
+    // Текущие координаты
+    string longitude = 5;
+    string latitude = 6;
+}
