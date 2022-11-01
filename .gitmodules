@@ -1,3 +1,0 @@
-[submodule "src/logger"]
-	path = src/logger
-	url = git@github.com:MikhailBerezhanov/Logger.git
